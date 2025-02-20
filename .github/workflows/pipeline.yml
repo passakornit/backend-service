@@ -42,19 +42,19 @@ jobs:
         exit-code: '1'
         severity: 'CRITICAL'
         template: |
-          {{- if .Results -}}
-          {{- $critical := 0 -}}
-          {{- range .Results -}}
-          {{- range .Vulnerabilities -}}
-          {{- if eq .Severity "CRITICAL" -}}
-          {{- $critical = add $critical 1 -}}
-          {{- end -}}
-          {{- end -}}
-          {{- end -}}
+          {{ if .Results }}
+          {{ $critical := 0 }}
+          {{ range .Results }}
+          {{ range .Vulnerabilities }}
+          {{ if eq .Severity "CRITICAL" }}
+          {{ $critical = add $critical 1 }}
+          {{ end }}
+          {{ end }}
+          {{ end }}
           Critical Vulnerabilities: {{ $critical }}
-          {{- else -}}
+          {{ else }}
           No Critical Vulnerabilities Found
-          {{- end -}}
+          {{ end }}
         output: 'trivy-results.txt'
 
     - name: Notify Google Chat
