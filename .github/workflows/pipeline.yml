@@ -37,7 +37,7 @@ jobs:
     - name: Scan Docker image with Trivy
       id: trivy-scan
       run: |
-        REPORT=$(trivy image --exit-code 1 --severity CRITICAL --no-progress ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_VERSION 2>&1 | tee /dev/tty)
+        REPORT=$(trivy image --exit-code 1 --severity CRITICAL --no-progress ***/***:$IMAGE_VERSION 2>&1 | tee /dev/stdout)
         SUMMARY=$(echo "$REPORT" | head -n 30)
         echo "report<<EOF" >> $GITHUB_OUTPUT
         echo "$SUMMARY" >> $GITHUB_OUTPUT
