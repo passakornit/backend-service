@@ -1,4 +1,4 @@
-name: CI/CD Pipeline with Trivy & AWS ECR & Google Chat Notification
+name: Pipeline
 
 on:
   pull_request:
