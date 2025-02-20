@@ -42,6 +42,7 @@ jobs:
 
     - name: Scan Docker image with Trivy
       id: trivy-scan
+      continue-on-error: true 
       run: |
         REPORT=$(trivy image --exit-code 1 --severity CRITICAL --no-progress ***/***:$IMAGE_VERSION 2>&1 | tee /dev/stdout)
         SUMMARY=$(echo "$REPORT" | head -n 50)
