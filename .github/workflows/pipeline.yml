@@ -36,37 +36,27 @@ jobs:
 
     - name: Scan Docker image with Trivy
       id: trivy-scan
-      uses: aquasecurity/trivy-action@0.29.0
-      with:
-        image-ref: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_VERSION }}
-        exit-code: '1'
-        severity: 'CRITICAL'
-
-    - name: Notify Google Chat
-      if: steps.trivy-scan.outputs.exit-code == '1'
       run: |
-       curl -X POST -H "Content-Type: application/json" \
-       -d '{"text": "Critical vulnerability found. Pipeline canceled."}' \
-       ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+        REPORT=$(trivy image --exit-code 1 --severity CRITICAL --no-progress ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_VERSION 2>&1 | tee /dev/tty)
+        SUMMARY=$(echo "$REPORT" | head -n 30)
+        echo "report<<EOF" >> $GITHUB_OUTPUT
+        echo "$SUMMARY" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Cancel workflow on Critical Vulnerability
-      if: steps.trivy-scan.outputs.exit-code == '1'
-      run: exit 1
+    - name: Send Failure Notification with Scan Results to Google Chat
+      if: failure()
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+        -d "{\"text\": \"🚨 CI/CD Pipeline FAILED: Critical vulnerabilities found.\n\nTrivy Scan Summary:\n\`\`\`\n${{ steps.trivy-scan.outputs.report }}\n\`\`\`\n🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" \
+        ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
 
     - name: Push Docker Image to ECR
+      if: success()
       run: |
         docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:$IMAGE_VERSION
 
-    # Send Success Notification to Google Chat if all steps passed
     - name: Send Success Notification to Google Chat
       if: success()
       run: |
         MESSAGE="{\"text\": \"🚀 CI/CD Pipeline SUCCESS:\n\n📌 Repository: *${{ github.repository }}*\n🔄 Branch: *${{ github.ref_name }}*\n🏷️ Tag: *${{ env.IMAGE_VERSION }}*\n📦 Docker Image: *${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_VERSION }}*\n\n🛡️ Trivy Scan: ✅ Passed\n\n📊 Status: ✅ SUCCESS\n🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}"
-        curl -X POST -H "Content-Type: application/json" -d "$MESSAGE" "${{ secrets.GOOGLE_CHAT_WEBHOOK }}"
-
-    # Send Failure Notification to Google Chat if any step failed
-    - name: Send Failure Notification to Google Chat
-      if: failure()
-      run: |
-        MESSAGE="{\"text\": \"🚀 CI/CD Pipeline FAILED:\n\n📌 Repository: *${{ github.repository }}*\n🔄 Branch: *${{ github.ref_name }}*\n🏷️ Tag: *${{ env.IMAGE_VERSION }}*\n📦 Docker Image: *${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_VERSION }}*\n\n🛡️ Trivy Scan: ❌ Failed (CRITICAL issues found)\n\n📊 Status: ❌ FAILED\n🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}"
         curl -X POST -H "Content-Type: application/json" -d "$MESSAGE" "${{ secrets.GOOGLE_CHAT_WEBHOOK }}"
