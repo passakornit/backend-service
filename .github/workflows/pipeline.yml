@@ -44,26 +44,24 @@ jobs:
         vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
         template: |
-          {{ if .Results }}
+          {{- if .Results -}}
           {
-            "critical_vulnerabilities": "found",
-            "message": "Critical vulnerabilities found in the image."
+            "vulnerabilities": {{ toJson .Results }}
           }
-          {{ else }}
+          {{- else -}}
           {
-            "critical_vulnerabilities": 0,
-            "message": "No critical vulnerabilities found."
+            "vulnerabilities": []
           }
-          {{ end }}
-        output: 'trivy-results.txt'
+          {{- end -}}
+        output: 'trivy-results.json'
 
     - name: Check Trivy scan output
-      run: cat trivy-results.txt
+      run: cat trivy-results.json
 
     - name: Notify Google Chat
       if: failure()
       run: |
-        SCAN_RESULT=$(cat trivy-results.txt)
+        SCAN_RESULT=$(cat trivy-results.json)
         curl -X POST -H "Content-Type: application/json" \
           -d "{\"text\": \"🚨 CI/CD Pipeline FAILED: Critical vulnerabilities found.\n\nTrivy Scan Results (JSON):\n\`\`\`json\n$SCAN_RESULT\n\`\`\`\n🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" \
           ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
