@@ -43,16 +43,8 @@ jobs:
         exit-code: '1'
         vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
-        template: |
-          {{- if .Results -}}
-          {
-            "vulnerabilities": {{ toJson .Results }}
-          }
-          {{- else -}}
-          {
-            "vulnerabilities": []
-          }
-          {{- end -}}
+        template: >
+          {{ if .Results }}{"vulnerabilities": {{ toJson .Results }}}{{ else }}{"vulnerabilities": []}{{ end }}
         output: 'trivy-results.json'
 
     - name: Check Trivy scan output
