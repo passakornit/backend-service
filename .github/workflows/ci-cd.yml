@@ -36,7 +36,7 @@ jobs:
 
     - name: Scan Docker image with Trivy
       id: trivy-scan
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.29.0
       with:
         image-ref: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_VERSION }}
         exit-code: '1'
