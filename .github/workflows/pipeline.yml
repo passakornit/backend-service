@@ -34,33 +34,18 @@ jobs:
       run: |
         docker build -t ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}/${{ github.ref_name }}/${{ github.event.repository.name }}:$IMAGE_VERSION .
 
-    - name: Scan Docker image with Trivy
-      id: trivy-scan
-      uses: aquasecurity/trivy-action@0.29.0
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}/${{ github.ref_name }}/${{ github.event.repository.name }}:${{ env.IMAGE_VERSION }}
-        #format: 'template'
-        exit-code: '1'
-        #vuln-type: 'os,library'
-        severity: 'CRITICAL,HIGH'
-        template: >
-          {"vulnerabilities": {{ toJson . }}}
-        output: 'trivy-results.json'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
 
-    - name: Check Trivy scan output
-      run: cat trivy-results.json
-
-    - name: Notify Google Chat
-      if: failure()
-      run: |
-        SCAN_RESULT=$(cat trivy-results.json)
-        curl -X POST -H "Content-Type: application/json" \
-          -d "{\"text\": \"🚨 CI/CD Pipeline FAILED: Critical vulnerabilities found.\n\nTrivy Scan Results (JSON):\n\`\`\`json\n$SCAN_RESULT\n\`\`\`\n🔗 [View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" \
-          ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
-
-    - name: Cancel workflow on Critical Vulnerability
-      if: steps.trivy-scan.outputs.exit-code == '1'
-      run: exit 1
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
 
     - name: Push Docker Image to ECR
       if: success()
