@@ -49,9 +49,7 @@ jobs:
         echo "report<<EOF" >> $GITHUB_OUTPUT
         echo "$SUMMARY" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
-    
-    - name: Check Trivy scan output
-      run: echo "Trivy Summary: ${{ steps.trivy-scan.outputs.report }}"
+        echo "Trivy Summary: ${{ steps.trivy-scan.outputs.report }}"
 
     - name: Send Failure Notification with Scan Results to Google Chat
       if: failure()
