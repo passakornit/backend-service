@@ -39,8 +39,9 @@ jobs:
       uses: aquasecurity/trivy-action@0.29.0
       with:
         image-ref: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}/${{ github.ref_name }}/${{ github.event.repository.name }}:${{ env.IMAGE_VERSION }}
+        format: 'template'
         exit-code: '1'
-        vuln-type: 'os,library'
+        #vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
         template: >
           {{ if .Results }}{"vulnerabilities": {{ toJson .Results }}}{{ else }}{"vulnerabilities": []}{{ end }}
