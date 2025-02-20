@@ -44,10 +44,13 @@ jobs:
       id: trivy-scan
       run: |
         REPORT=$(trivy image --exit-code 1 --severity CRITICAL --no-progress ***/***:$IMAGE_VERSION 2>&1 | tee /dev/stdout)
-        SUMMARY=$(echo "$REPORT" | head -n 30)
+        SUMMARY=$(echo "$REPORT" | head -n 50)
         echo "report<<EOF" >> $GITHUB_OUTPUT
         echo "$SUMMARY" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Check Trivy scan output
+      run: echo "Trivy Summary: ${{ steps.trivy-scan.outputs.report }}"
 
     - name: Send Failure Notification with Scan Results to Google Chat
       if: failure()
