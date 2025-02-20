@@ -1,4 +1,7 @@
-name: CI/CD Pipeline with Trivy & AWS ECR & Google Chat Notification
+name: Pipepline
+
+permissions:
+  security-events: write
 
 on:
   pull_request:
